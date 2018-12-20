@@ -8,6 +8,7 @@ var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
 
 const rentalRouter = require("./routes/rentals");
+const userRouter = require("./routes/user");
 
 const config = require("./config/dev");
 
@@ -40,6 +41,7 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/api/v1/rentals", rentalRouter);
+app.use("/api/v1/users", userRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
