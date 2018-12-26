@@ -9,8 +9,9 @@ var usersRouter = require("./routes/users");
 
 const rentalRouter = require("./routes/rentals");
 const userRouter = require("./routes/user");
+const bookingRouter = require("./routes/booking");
 
-const config = require("./config/dev");
+const config = require("./config");
 
 //DB mongodb
 const mongoose = require("mongoose");
@@ -38,10 +39,20 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
-app.use("/", indexRouter);
+// app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/api/v1/rentals", rentalRouter);
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/bookings", bookingRouter);
+
+if (process.env.NODE_ENV === "production") {
+  const appPath = path.join(__dirname, "dist");
+  app.use(express.static(appPath));
+
+  app.get("*", function(req, res) {
+    res.sendFile(path.resolve(appPath, "index.html"));
+  });
+}
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

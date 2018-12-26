@@ -2,7 +2,7 @@ const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const { normalizeErrors } = require("../helpers/mongoose");
 const jwt = require("jsonwebtoken");
-const config = require("../config/dev");
+const config = require("../config");
 
 module.exports.auth = (req, res, next) => {
   const { email, password } = req.body;
@@ -67,7 +67,7 @@ module.exports.auth = (req, res, next) => {
 };
 
 module.exports.register = (req, res, next) => {
-  const { username, email, password, passowrdConfirmation } = req.body;
+  const { username, email, password, passwordConfirmation } = req.body;
 
   if (!username || !email) {
     return res.status(422).json({
@@ -80,7 +80,7 @@ module.exports.register = (req, res, next) => {
     });
   }
 
-  if (password !== passowrdConfirmation) {
+  if (password !== passwordConfirmation) {
     return res.status(422).json({
       errors: [
         {
