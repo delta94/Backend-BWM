@@ -3,6 +3,7 @@ var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
+var session = require("express-session");
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
@@ -10,8 +11,13 @@ var usersRouter = require("./routes/users");
 const rentalRouter = require("./routes/rentals");
 const userRouter = require("./routes/user");
 const bookingRouter = require("./routes/booking");
+const imageUploadRouter = require("./routes/image-upload");
+const paymentRouter = require("./routes/payments");
+const authRouter = require("./routes/auth");
 
 const config = require("./config");
+const passport = require("passport");
+const passportGoogle = require("./config/passport");
 
 //DB mongodb
 const mongoose = require("mongoose");
@@ -29,6 +35,20 @@ mongoose
 
 var app = express();
 
+app.use(
+  session({
+    secret: config.SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      maxAge: 60 * 60 * 1000
+    }
+  })
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 // view engine setup
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "ejs");
@@ -41,9 +61,13 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // app.use("/", indexRouter);
 app.use("/users", usersRouter);
+app.use("/api/v1", imageUploadRouter);
+
 app.use("/api/v1/rentals", rentalRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/bookings", bookingRouter);
+app.use("/api/v1/payments", paymentRouter);
+app.use("/auth", authRouter);
 
 if (process.env.NODE_ENV === "production") {
   const appPath = path.join(__dirname, "dist");

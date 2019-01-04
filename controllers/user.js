@@ -4,6 +4,15 @@ const { normalizeErrors } = require("../helpers/mongoose");
 const jwt = require("jsonwebtoken");
 const config = require("../config");
 
+const nodemailer = require("nodemailer");
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: "hyeieisi@gmail.com",
+    pass: "Ngocdat21"
+  }
+});
+
 module.exports.auth = (req, res, next) => {
   const { email, password } = req.body;
 
@@ -104,10 +113,26 @@ module.exports.register = (req, res, next) => {
         });
       }
 
+      let mailOptions = {
+        from: "hyeieisi@gmail.com",
+        to: email,
+        subject: "Thanks for registering my web",
+        html: `<h1>Welcome !</h1><br><p>You have successfully registered your account: ${email} and password: ${password}`
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.log(error);
+        } else {
+          console.log("Email sent: " + info.response);
+        }
+      });
+
       const user = new User({
         username,
         email,
-        password
+        password,
+        avatar: `http://api.adorable.io/avatars/250/${username}.png`
       });
 
       bcrypt.genSalt(10, function(err, salt) {
@@ -135,4 +160,42 @@ module.exports.register = (req, res, next) => {
         errors: normalizeErrors(err.errors)
       });
     });
+};
+
+module.exports.getUser = function(req, res) {
+  const requestedUserId = req.params.id;
+  const user = req.userProfile;
+
+  if (requestedUserId === user.id) {
+    User.findById(requestedUserId, function(err, foundUser) {
+      if (err) {
+        return res.status(422).send({ errors: normalizeErrors(err.errors) });
+      }
+
+      return res.json(foundUser);
+    });
+  } else {
+    User.findById(requestedUserId)
+      .select("-revenue -stripeCustomerId -password")
+      .exec(function(err, foundUser) {
+        if (err) {
+          return res.status(422).send({ errors: normalizeErrors(err.errors) });
+        }
+
+        return res.json(foundUser);
+      });
+  }
+};
+
+module.exports.updateUser = (req, res) => {
+  const user = req.userProfile;
+  const userData = req.body;
+
+  User.findByIdAndUpdate({ _id: user._id }, { $set: userData }, { new: true })
+    .then(foundUser => {
+      res.json(foundUser);
+    })
+    .catch(err =>
+      res.status(422).send({ errors: normalizeErrors(err.errors) })
+    );
 };

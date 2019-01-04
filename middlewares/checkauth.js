@@ -13,7 +13,7 @@ module.exports = (req, res, next) => {
     User.findById(decodedToken.userId)
       .then(user => {
         if (user) {
-          req.user = user;
+          req.userProfile = user;
           next();
         } else {
           return res.status(401).json({

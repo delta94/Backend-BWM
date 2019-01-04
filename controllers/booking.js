@@ -3,6 +3,7 @@ const Rental = require("../models/rental");
 const { normalizeErrors } = require("../helpers/mongoose");
 const moment = require("moment");
 const User = require("../models/user");
+const createPayment = require("../services/createPayment");
 
 module.exports.createBooking = (req, res, next) => {
   const {
@@ -14,7 +15,7 @@ module.exports.createBooking = (req, res, next) => {
     rental,
     paymentToken
   } = req.body;
-  const user = req.user;
+  const user = req.userProfile;
 
   const booking = new Booking({
     startAt,
@@ -27,8 +28,8 @@ module.exports.createBooking = (req, res, next) => {
   Rental.findById(rental._id)
     .populate("bookings")
     .populate("user")
-    .then(foundRental => {
-      if (foundRental.user.id === user._id) {
+    .then(async foundRental => {
+      if (foundRental.user.id == user._id) {
         return res.status(422).json({
           errors: [
             {
@@ -48,21 +49,44 @@ module.exports.createBooking = (req, res, next) => {
         booking.rental = foundRental;
 
         foundRental.bookings.push(booking);
-        foundRental.save();
 
-        booking.save().catch(err => {
-          return res.status(422).send({ errors: normalizeErrors(err.errors) });
-        });
-
-        User.update({ _id: user.id }, { $push: { bookings: booking } }).catch(
-          err => {
-            return res
-              .status(422)
-              .send({ errors: normalizeErrors(err.errors) });
-          }
+        const { payment, err } = await createPayment(
+          booking,
+          foundRental.user,
+          paymentToken
         );
 
-        return res.json({ startAt: booking.startAt, endAt: booking.endAt });
+        if (payment) {
+          booking.payment = payment;
+
+          booking
+            .save()
+            .then(() => {
+              foundRental.save();
+              User.update(
+                { _id: user.id },
+                { $push: { bookings: booking } }
+              ).catch(err => {
+                return res
+                  .status(422)
+                  .send({ errors: normalizeErrors(err.errors) });
+              });
+
+              return res.json({
+                startAt: booking.startAt,
+                endAt: booking.endAt
+              });
+            })
+            .catch(err => {
+              return res
+                .status(422)
+                .send({ errors: normalizeErrors(err.errors) });
+            });
+        } else {
+          return res
+            .status(422)
+            .send({ errors: [{ title: "Payment Error", detail: err }] });
+        }
       } else {
         return res.status(422).send({
           errors: [
@@ -82,7 +106,7 @@ module.exports.createBooking = (req, res, next) => {
 };
 
 exports.getUserBookings = function(req, res) {
-  const user = req.user;
+  const user = req.userProfile;
 
   Booking.where({ user })
     .populate("rental")
@@ -94,8 +118,6 @@ exports.getUserBookings = function(req, res) {
       return res.json(foundBookings);
     });
 };
-
-
 
 function isValidBooking(proposedBooking, rental) {
   let isValid = true;
