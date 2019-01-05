@@ -3868,7 +3868,6 @@ var RentalUpdateComponent = /** @class */ (function () {
         var _this = this;
         this.rentalService.getRentalById(rentalId).subscribe(function (rental) {
             _this.rental = rental;
-            debugger;
         });
     };
     RentalUpdateComponent.prototype.updateRental = function (rentalId, rentalData) {

@@ -1,8 +1,8 @@
 module.exports = {
   DB_URI: "mongodb://admin:Ngocdat97@ds139534.mlab.com:39534/bwm-ng-dev",
   SECRET: "NGOMINHDUC",
-  AWS_ACCESS_KEY_ID: "AKIAILQRHV3R3YNFX7WA",
-  AWS_SECRET_ACCESS_KEY: `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`,
+  AWS_ACCESS_KEY_ID: "AKIAIMHNNXJU4SSEQ5LQ",
+  AWS_SECRET_ACCESS_KEY: `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`,
   STRIPE_SK: "sk_test_dbX4cwwCqydMTLvFo6WnfKvW",
   GOOGLE: {
     CLIENTID:
